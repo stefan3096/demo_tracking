@@ -1,0 +1,78 @@
+Setting up PostgreSQL AWS
+Buat VM untuk PostgreSQL
+Launch Instance
+
+Name: db-postgres-instance
+
+AMI: Ubuntu 22.04 (atau Amazon Linux)
+
+Instance type: t2.micro ✅ (free tier)
+
+Key pair: Buat atau pilih key (untuk SSH)
+
+Allow SSH (port 22)
+
+Tambahkan Rule:
+
+Custom TCP Rule → Port 5432 (PostgreSQL)
+
+Source: Custom IP or 0.0.0.0/0 (untuk testing)
+
+Launch and wait...
+
+Cara Tambahkan Rule Port 5432 (PostgreSQL):
+Di bagian “Network settings”, pastikan:
+
+“Create security group” ✅ dipilih.
+
+Lalu klik tombol Edit (di kanan atas bagian “Network settings”).
+
+Di dalam form yang muncul:
+
+Scroll ke bagian "Firewall (security group rules)"
+
+Klik "Add security group rule"
+
+Atur rule seperti ini:
+
+Field	Value
+Type	Custom TCP Rule
+Protocol	TCP
+Port Range	5432
+Source	0.0.0.0/0 (atau IP kamu)
+Description (optional)	PostgreSQL Access
+
+⚠️ Jika ini hanya untuk testing, 0.0.0.0/0 boleh. Tapi untuk production, sebaiknya pakai IP spesifik (misalnya IP dari server aplikasimu atau IP publik lokal).
+
+konek to postgre
+ssh -i "stefanus.pem" ubuntu@ec2-16-171-133-243.eu-north-1.compute.amazonaws.com
+
+do config
+sudo apt update
+sudo apt install postgresql postgresql-contrib -y
+sudo systemctl start PostgreSQL
+sudo -u postgres psql
+\password postgres
+sudo nano /etc/postgresql/*/main/postgresql.conf
+listen_addresses = '*'
+sudo nano /etc/postgresql/*/main/pg_hba.conf
+host all all 0.0.0.0/0 md5
+sudo systemctl restart PostgreSQL
+
+for fix connection at Linux command
+sudo nano /etc/postgresql/16/main/pg_hba.conf
+tambahkan 
+host    all             all             0.0.0.0/0               md5
+
+next 
+sudo nano /etc/postgresql/16/main/postgresql.conf
+#listen_addresses = 'localhost' to be = listen_addresses = '*'
+
+untuk mengecek user exist 
+sudo -u postgres psql
+\du
+
+untuk create user and with password 
+CREATE USER stefa WITH PASSWORD 'yourpassword';
+untuk edit password user 
+ALTER USER stefa WITH PASSWORD 'yourpassword';

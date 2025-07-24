@@ -1,0 +1,17 @@
+Buat VM untuk MongoDB
+Launch Instance
+
+Name: db-mongo-instance
+
+AMI: Ubuntu 22.04
+
+Instance type: t2.micro
+
+Security group:
+
+SSH (22)
+
+MongoDB (27017)
+
+konek to
+ssh -i "stefanus.pem" ubuntu@ec2-13-60-180-184.eu-north-1.compute.amazonaws.com
