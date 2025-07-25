@@ -12,7 +12,7 @@ import java.time.OffsetDateTime;
 
 @Setter
 @Getter
-public class TransactionHistory implements Persistable<String> {
+public class Transaction implements Persistable<String> {
 
 	@Id
     private String id;
@@ -20,7 +20,6 @@ public class TransactionHistory implements Persistable<String> {
 	private String customerId;
 	private String transactionId;
 	private String event;
-	private LocalDateTime created;
 	private String statusCode;
 	private String message;
 	@CreatedDate

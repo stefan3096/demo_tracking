@@ -37,7 +37,7 @@ public class ESLog {
 
 
 
-    public ESLog(String event, TransactionHistory trxHistory){
+    public ESLog(String event, Transaction trxHistory){
         this.id = event+" "+trxHistory.getUsername()+" "+logTime;
         this.method = "Transaction "+event;
         this.payload = trxHistory;

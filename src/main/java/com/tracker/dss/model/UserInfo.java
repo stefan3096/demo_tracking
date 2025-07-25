@@ -8,7 +8,7 @@ public class UserInfo {
     @Id
     private String id;
     private Integer level;
-    private Long NIK;
+    private Long nik;
     private String username;
     private String password;
     private String tagId;
