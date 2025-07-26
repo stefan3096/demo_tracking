@@ -1,30 +1,50 @@
 package com.tracker.dss.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.ser.OffsetDateTimeSerializer;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Persistable;
+import org.springframework.data.relational.core.mapping.Table;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 
-@Setter
-@Getter
+@Data
+@ToString
+@Table("transaction")
 public class Transaction implements Persistable<String> {
 
 	@Id
     private String id;
 	private String username;
 	private String customerId;
+	private String locationCode;
+	private String location;
 	private String transactionId;
+	private String senderName;
+	private String receiverName;
+	private String message;
 	private String event;
 	private String statusCode;
-	private String message;
-	@CreatedDate
+	private String workerId;
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
+	@JsonSerialize(using = OffsetDateTimeSerializer.class)
 	private OffsetDateTime createdDate;
+
+	@DecimalMin(value = "0.000", message = "Weight cannot be negative")
+	@Digits(integer = 10, fraction = 3, message = "Weight must have maximum 3 decimal places")
+	@JsonProperty("weight")
+	private BigDecimal weight;
 
 	@Override
 	public boolean isNew() {

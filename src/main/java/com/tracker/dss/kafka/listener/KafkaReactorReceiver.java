@@ -11,16 +11,12 @@ import com.tracker.dss.service.impl.LogService;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.kafka.core.MicrometerConsumerListener;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Flux;
 import reactor.kafka.receiver.KafkaReceiver;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
@@ -34,11 +30,10 @@ public class KafkaReactorReceiver {
     private final GenerateTransaction generateTransaction;
 
     @Bean
-    ApplicationRunner runner(MicrometerConsumerListener<Long,String> consumerListener){
-        return args -> {
-            processor(consumerListener);
-        };
+    ApplicationRunner runner() {
+        return args -> processor();
     }
+
 
     @Bean
     MicrometerConsumerListener<Long, String> consumerListener(MeterRegistry registry) {
@@ -47,31 +42,27 @@ public class KafkaReactorReceiver {
 
 
 
-    public void processor(MicrometerConsumerListener<Long,String> consumerListener){
+    public void processor(){
         kafkaReceiver
                 .receive()
                 .subscribe(r -> {
                     AtomicLong triggeredTime = new AtomicLong(0L);
                     triggeredTime.set(System.currentTimeMillis());
 
-                    KafkaMessage message = null;
-
-                    Flux<Object> messageValue = Flux.empty();
+                    KafkaMessage message;
                     try {
                         message = new ObjectMapper().readValue(r.value(), KafkaMessage.class);
                         logService.log(new ESLog(message));
 
-                        if (null != message) {
-                            if (message.getClientCode().equals("Core-Dss")) {
-                                KafkaMessage finalMessage = message;
-                                if (null != finalMessage.getMethod()) {
-                                    log.info("new message : {}", finalMessage.getMethod());
-                                    switch (finalMessage.getMethod()) {
-                                        case "Generate New Transacton ":
-                                            TransactionRequest dataTransactionRequest = new ObjectMapper().convertValue(finalMessage.getData(), new TypeReference<>(){});
-                                            generateTransaction.transaction(dataTransactionRequest);
-                                            break;
-                                    }
+                        if (message.getClientCode().equals("Core-Dss")) {
+                            if (null != message.getMethod()) {
+                                log.info("new message : {}", message.getMethod());
+                                switch (message.getMethod()) {
+                                    case "Generate New Transacton ":
+                                        TransactionRequest dataTransactionRequest = new ObjectMapper().convertValue(message.getData(), new TypeReference<>() {
+                                        });
+                                        generateTransaction.transaction(dataTransactionRequest);
+                                        break;
                                 }
                             }
                         }

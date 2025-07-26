@@ -2,13 +2,16 @@ package com.tracker.dss.model;
 
 import lombok.Data;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
 
 @Data
+@Table(name = "user_info")
 public class UserInfo {
     @Id
     private String id;
     private Integer level;
     private Long nik;
+    private String workerId;
     private String username;
     private String password;
     private String tagId;
@@ -20,4 +23,5 @@ public class UserInfo {
     private String address;
     private String countryCode;
     private String destinationCountryCode;
+
 }
