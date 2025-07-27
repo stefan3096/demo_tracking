@@ -14,6 +14,7 @@ import com.tracker.dss.repository.StatusDetailRepository;
 import com.tracker.dss.repository.TransactionRepository;
 import com.tracker.dss.repository.UserInfoRepository;
 import com.tracker.dss.service.GenerateTransaction;
+import com.tracker.dss.util.Weight;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -40,6 +41,7 @@ public class GenerateTransactionServiceImpl  implements GenerateTransaction {
     private final ObjectMapper objectMapper;
     private final TransactionRepository transactionRepository;
     private final TransactionRedisServiceimpl transactionRedisService;
+    private final Weight util;
 
     private final KafkaSenderTemplate kafkaSenderTemplate;
 
@@ -105,7 +107,7 @@ public class GenerateTransactionServiceImpl  implements GenerateTransaction {
         t.setWorkerId(worker.getWorkerId());
         t.setLocation(detailBranch.getAddress());
         t.setLocationCode(detailBranch.getCode());
-        t.setWeight(req.getWeight());
+        t.setWeight(util.setWeight(req.getWeight().doubleValue()));
         t.setCreatedDate(OffsetDateTime.now());
         return t;
     }
