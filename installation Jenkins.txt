@@ -87,14 +87,10 @@ for Jenkins setting parameterized
 pipeline {
     agent any
 
-    parameters {
-        string(name: 'BRANCH', defaultValue: 'dev', description: 'Branch to build')
-    }
-
     stages {
         stage('Checkout') {
             steps {
-                git branch: "${params.BRANCH}", url: 'https://github.com/stefan3096/demo_tracking.git'
+                echo 'Source code already checked out by Jenkins.'
             }
         }
 
@@ -115,13 +111,12 @@ pipeline {
                 sh '''
                   docker stop demo-tracking || true
                   docker rm demo-tracking || true
-                  docker run -d --name demo-tracking -p 8081:8080 demo-tracking:latest
+                  docker run -d --name demo-tracking -p 8087:8080 demo-tracking:latest
                 '''
             }
         }
     }
 }
-
 
 setup Jenkins
 
@@ -188,3 +183,14 @@ http://<IP-JENKINS>:8080/github-webhook/
 Content type: application/json
 
 Centang Just the push event
+
+
+# Beri permission eksekusi ke mvnw
+chmod +x mvnw
+
+# Pastikan git menyimpan perubahan permission
+git update-index --chmod=+x mvnw
+
+# Commit dan push
+git commit -m "Fix: ensure mvnw is executable"
+git push origin dev
