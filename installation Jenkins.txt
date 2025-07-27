@@ -1,0 +1,190 @@
+installation Jenkins
+
+sudo apt update -y
+sudo apt install -y openjdk-17-jdk curl gnupg
+
+tambahkan repo Jenkins 
+curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo tee \
+    /usr/share/keyrings/jenkins-keyring.asc > /dev/null
+echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] \
+    https://pkg.jenkins.io/debian-stable binary/ | \
+    sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
+
+jalankan update lagi
+sudo apt update
+sudo apt install -y Jenkins
+
+
+start Jenkins 
+sudo systemctl enable jenkins
+sudo systemctl start jenkins
+sudo systemctl status Jenkins
+
+sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+
+Buka http://<Public-IP-EC2>:8080
+
+Install Docker di Ubuntu
+
+sudo apt update
+sudo apt install -y ca-certificates curl gnupg lsb-release
+
+# Tambahkan Docker repo
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io
+
+Izinkan Jenkins pakai Docker
+sudo usermod -aG docker jenkins
+sudo systemctl restart jenkins
+sudo systemctl restart docker
+
+
+
+for setting hardcode Jenkins deployment
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'dev', url: 'https://github.com/stefan3096/demo_tracking.git'
+            }
+        }
+
+        stage('Build JAR') {
+            steps {
+                sh './mvnw clean package -DskipTests'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t demo-tracking:latest .'
+            }
+        }
+
+        stage('Deploy Container') {
+            steps {
+                sh '''
+                  docker stop demo-tracking || true
+                  docker rm demo-tracking || true
+                  docker run -d --name demo-tracking -p 8081:8080 demo-tracking:latest
+                '''
+            }
+        }
+    }
+}
+
+
+for Jenkins setting parameterized
+
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'BRANCH', defaultValue: 'dev', description: 'Branch to build')
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: "${params.BRANCH}", url: 'https://github.com/stefan3096/demo_tracking.git'
+            }
+        }
+
+        stage('Build JAR') {
+            steps {
+                sh './mvnw clean package -DskipTests'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t demo-tracking:latest .'
+            }
+        }
+
+        stage('Deploy Container') {
+            steps {
+                sh '''
+                  docker stop demo-tracking || true
+                  docker rm demo-tracking || true
+                  docker run -d --name demo-tracking -p 8081:8080 demo-tracking:latest
+                '''
+            }
+        }
+    }
+}
+
+
+setup Jenkins
+
+Masuk ke job Jenkins → Configure
+
+Di bagian Pipeline → Definition, pilih Pipeline script from SCM
+
+SCM: pilih Git
+
+Masukkan URL repo kamu:
+
+
+https://github.com/stefan3096/demo_tracking.git
+Branch Specifier: ganti jadi:
+
+*/dev
+
+Tambah Jenkinsfile di repo (atau pakai script langsung)
+Contoh Jenkinsfile untuk build & deploy di port 8087:
+
+
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'dev', url: 'https://github.com/stefan3096/demo_tracking.git'
+            }
+        }
+
+        stage('Build JAR') {
+            steps {
+                sh './mvnw clean package -DskipTests'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t demo-tracking:latest .'
+            }
+        }
+
+        stage('Deploy Container') {
+            steps {
+                sh '''
+                  docker stop demo-tracking || true
+                  docker rm demo-tracking || true
+                  docker run -d --name demo-tracking -p 8087:8080 demo-tracking:latest
+                '''
+            }
+        }
+    }
+}
+
+Setup Webhook di GitHub
+Masuk ke repo GitHub → Settings → Webhooks → Add webhook
+
+Payload URL:
+
+http://<IP-JENKINS>:8080/github-webhook/
+(contoh: http://13.48.138.238:8080/github-webhook/)
+
+Content type: application/json
+
+Centang Just the push event
