@@ -34,3 +34,12 @@ curl --location 'http://13.48.138.238:8087/test/transaction' \
 
 for get Data By Customer Id
 curl --location 'http://13.48.138.238:8087/test/customer/fb3e39c6-6c38-4ebc-9e4c-ad15b2a159ab'
+
+
+note: if you wanna change of data sending please cek in db connection what value of
+senderName PostgreSql{userInfo}
+senderEmail PostgreSql{userInfo}
+nik PostgreSql{userInfo}
+workerId PostgreSql{userInfo}
+statusCode mongocollection{StatusDetail}
+branchCode mongocollection{DetailBranch}
