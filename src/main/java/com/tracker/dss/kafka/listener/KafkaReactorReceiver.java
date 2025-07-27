@@ -57,12 +57,10 @@ public class KafkaReactorReceiver {
                         if (message.getClientCode().equals("Core-Dss")) {
                             if (null != message.getMethod()) {
                                 log.info("new message : {}", message.getMethod());
-                                switch (message.getMethod()) {
-                                    case "Generate New Transacton ":
-                                        TransactionRequest dataTransactionRequest = new ObjectMapper().convertValue(message.getData(), new TypeReference<>() {
-                                        });
-                                        generateTransaction.transaction(dataTransactionRequest);
-                                        break;
+                                if (message.getMethod().equals("Generate New Transacton ")) {
+                                    TransactionRequest dataTransactionRequest = new ObjectMapper().convertValue(message.getData(), new TypeReference<>() {
+                                    });
+                                    generateTransaction.transaction(dataTransactionRequest);
                                 }
                             }
                         }

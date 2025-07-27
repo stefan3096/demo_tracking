@@ -1,7 +1,9 @@
 package com.tracker.dss.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tracker.dss.dto.KafkaMessage;
 import com.tracker.dss.dto.TransactionRequest;
+import com.tracker.dss.kafka.producer.KafkaSenderTemplate;
 import com.tracker.dss.model.DetailBranch;
 import com.tracker.dss.model.StatusDetail;
 import com.tracker.dss.model.Transaction;
@@ -14,13 +16,18 @@ import com.tracker.dss.repository.UserInfoRepository;
 import com.tracker.dss.service.GenerateTransaction;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -33,17 +40,21 @@ public class GenerateTransactionServiceImpl  implements GenerateTransaction {
     private final ObjectMapper objectMapper;
     private final TransactionRepository transactionRepository;
     private final TransactionRedisServiceimpl transactionRedisService;
+
+    private final KafkaSenderTemplate kafkaSenderTemplate;
+
+
     @Override
-    public  Mono<Transaction> transaction(TransactionRequest transactionRequest) {
-       return findUser(transactionRequest)
+    public void transaction(TransactionRequest transactionRequest) {
+        findUser(transactionRequest)
                 .flatMap(userInfo ->
                         processWorkerAndStatus(userInfo, transactionRequest))
                 .switchIfEmpty(
                         Mono.defer(() -> {
                     log.warn("No user found for NIK, Email, or Username.");
                     return Mono.just(new Transaction());
-                }));
-//                .subscribe(transaction -> log.info("Processed transaction: {}", transaction));
+                }))
+                .subscribe(transaction -> log.info("Processed transaction: {}", transaction));
     }
 
     private Mono<UserInfo> findUser(TransactionRequest req) {
@@ -108,4 +119,24 @@ public class GenerateTransactionServiceImpl  implements GenerateTransaction {
     }
 
 
+    @Override
+    public Mono<ResponseEntity<String>> publishTransaction(TransactionRequest transactionRequest) {
+      return  findUser(
+                transactionRequest
+        ).flatMap(userInfo -> {
+            String method = "Generate New Transacton ";
+            String messageId = method + (UUID.randomUUID().getMostSignificantBits() & Long.MAX_VALUE);
+
+            AtomicLong triggeredTime = new AtomicLong(0L);
+            KafkaMessage payload = new KafkaMessage("Core-Dss", method, messageId, transactionRequest);
+
+          kafkaSenderTemplate.sendMessage(payload);
+          return Mono.just(ResponseEntity.ok("success"));
+        }).switchIfEmpty(
+                Mono.defer(() -> {
+                    log.warn("No user found for NIK, Email, or Username.");
+                    return Mono.just(ResponseEntity.badRequest().build());
+                }));
+//              .subscribe();
+    }
 }

@@ -34,16 +34,16 @@ public class ReactorKafkaConfiguration {
     private String receiverTopic;
 
     @Bean
-    public SenderOptions<Long, String> senderOptions(){
+    public SenderOptions<Object, String> senderOptions(){
         Map<String, Object> producerProps = new HashMap<>();
         producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        producerProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, LongSerializer.class);
+        producerProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         producerProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        return SenderOptions.<Long,String>create(producerProps).maxInFlight(1024);
+        return SenderOptions.<Object,String>create(producerProps).maxInFlight(1024);
     }
 
     @Bean
-    public KafkaSender<Long, String> kafkaSender(){
+    public KafkaSender<Object, String> kafkaSender(){
         return KafkaSender.create(senderOptions());
     }
 
