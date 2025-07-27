@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/stefan3096/demo_tracking.git'
+                echo 'Source code already checked out by Jenkins.'
             }
         }
 
